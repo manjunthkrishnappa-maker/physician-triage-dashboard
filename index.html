@@ -211,9 +211,9 @@
   </main>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    // IMPORT FIX: Added initializeFirestore here
-    import { initializeFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    // UPDATED SDK TO 10.8.0
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { initializeFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCBww28IM8l9OpwR-6ET6CJO9kxkUsP_SI",
@@ -224,15 +224,14 @@
       appId: "1:36680889455:web:682e2796d40bdd6378899a"
     };
 
-    console.log("Clinical Dashboard v1.2: Initializing Handshake with post-pcidata...");
+    console.log("Clinical Dashboard v1.3: Forcing named database binding...");
 
     const app = initializeApp(firebaseConfig);
     
-    // INITIALIZATION FIX: Using initializeFirestore correctly with named database
+    // THE CRITICAL FIX: The named database goes as the THIRD parameter.
     const db = initializeFirestore(app, {
-      experimentalForceLongPolling: true,
-      databaseId: "post-pcidata"
-    });
+      experimentalForceLongPolling: true
+    }, "post-pcidata");
 
     const reportsRef = collection(db, "clinical_reports");
     const q = query(reportsRef, orderBy("timestamp", "desc"));
@@ -243,6 +242,7 @@
 
         if (snapshot.empty) {
             patientList.innerHTML = '<p style="padding: 20px; opacity: 0.5;">No records found in post-pcidata.</p>';
+            return;
         }
 
         snapshot.forEach((doc) => {
