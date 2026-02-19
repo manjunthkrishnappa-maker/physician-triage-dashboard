@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <link rel="icon" href="https://www.gstatic.com/images/icons/material/system/2x/favorite_border_black_24dp.png" type="image/png">
-
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -225,18 +224,14 @@
       appId: "1:36680889455:web:682e2796d40bdd6378899a"
     };
 
-    console.log("Clinical Dashboard v1.4: Syncing with patient_reports...");
+    console.log("Clinical Dashboard v1.5: Bulletproof Data Parsing active...");
 
     const app = initializeApp(firebaseConfig);
-    
     const db = initializeFirestore(app, {
       experimentalForceLongPolling: true
     }, "post-pcidata");
 
-    // THE FIX: Pointing to your exact collection name
     const reportsRef = collection(db, "patient_reports");
-    
-    // Sorts by timestamp so the newest report is at the top of the sidebar
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
@@ -249,17 +244,31 @@
         }
 
         snapshot.forEach((doc) => {
-            const data = doc.data();
-            renderPatientCard(data, doc.id);
+            renderPatientCard(doc.data(), doc.id);
         });
     }, (error) => {
         console.error("Firestore Sync Error:", error);
     });
 
+    // Helper function to safely extract and format time
+    function getSafeTime(timestampObj, formatType = 'time') {
+        if (!timestampObj) return '--:--';
+        try {
+            // Check if it's a Firestore Timestamp
+            if (typeof timestampObj.toDate === 'function') {
+                return formatType === 'time' ? timestampObj.toDate().toLocaleTimeString() : timestampObj.toDate().toLocaleString();
+            }
+            // Otherwise, treat it as a standard String or Number
+            const parsedDate = new Date(timestampObj);
+            return formatType === 'time' ? parsedDate.toLocaleTimeString() : parsedDate.toLocaleString();
+        } catch (e) {
+            return '--:--';
+        }
+    }
+
     function renderPatientCard(data, docId) {
         const patientList = document.querySelector('.patient-list');
         
-        // Safety fallback: if triage_status is missing, default to GREEN
         const status = data.triage_status ? data.triage_status.toUpperCase() : 'GREEN';
         const statusColor = status === 'RED' ? 'var(--emergent-red)' : 
                             status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
@@ -268,12 +277,14 @@
         card.className = 'patient-item';
         card.onclick = () => window.loadPatientDetails(data);
         
+        const displayTime = getSafeTime(data.timestamp, 'time');
+
         card.innerHTML = `
             <div class="meta">
               <strong>ID: ${data.patient_id || 'N/A'} (${data.patient_name || 'Patient'})</strong>
               <div class="status-dot" style="background: ${statusColor}; box-shadow: 0 0 8px ${statusColor};"></div>
             </div>
-            <p style="font-size: 0.75rem; opacity: 0.6;">Sync: ${data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : '--'}</p>
+            <p style="font-size: 0.75rem; opacity: 0.6;">Sync: ${displayTime}</p>
             <p style="font-size: 0.8rem; color: ${statusColor}; margin-top: 5px; font-weight: 700;">
                 ${status === 'RED' ? '🚨 URGENT TRIAGE' : 'STABLE'}
             </p>
@@ -283,15 +294,13 @@
 
     window.loadPatientDetails = function(data) {
         document.querySelector('h1').innerHTML = `${data.patient_name || 'Unknown Patient'} <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id || '---'}</span>`;
-        document.getElementById('sync-time').innerText = data.timestamp ? data.timestamp.toDate().toLocaleString() : '--';
+        document.getElementById('sync-time').innerText = getSafeTime(data.timestamp, 'full');
         
         const status = data.triage_status ? data.triage_status.toUpperCase() : 'GREEN';
         const statusDisplay = document.getElementById('triage-status-display');
         statusDisplay.innerText = `🔴 ${status}`;
         statusDisplay.style.color = status === 'RED' ? 'var(--emergent-red)' : 'var(--stable-green)';
 
-        // Map Firestore fields to the UI grid
-        // Note: Check your GCP documents to ensure these field names exactly match what your bot saves!
         const summaries = data.summaries || {};
         document.getElementById('ischemic-content').innerText = summaries.chest_breathing_summary || data.chest_breathing_summary || "No data.";
         document.getElementById('meds-content').innerText = summaries.meds_summary || data.meds_summary || "No data.";
