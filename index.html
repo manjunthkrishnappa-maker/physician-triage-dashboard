@@ -124,6 +124,7 @@
       font-size: 0.95rem;
       color: rgba(255,255,255,0.8);
       line-height: 1.5;
+      white-space: pre-wrap; /* Ensures line breaks in the summary format properly */
       border-left: 4px solid var(--medical-blue);
     }
 
@@ -180,8 +181,8 @@
         <h3>--</h3>
       </div>
       <div class="metric-card">
-        <span>Stent Location</span>
-        <h3>--</h3>
+        <span>Review Status</span>
+        <h3 id="review-status-display">--</h3>
       </div>
     </div>
 
@@ -199,7 +200,7 @@
         <div id="meds-content" class="symptom-note">---</div>
       </div>
       <div class="data-card">
-        <h4><i class="fa-solid fa-lungs"></i> Hemodynamics</h4>
+        <h4><i class="fa-solid fa-lungs"></i> Hemodynamics & Wellbeing</h4>
         <div id="hemo-content" class="symptom-note">---</div>
       </div>
     </div>
@@ -224,7 +225,7 @@
       appId: "1:36680889455:web:682e2796d40bdd6378899a"
     };
 
-    console.log("Clinical Dashboard v1.5: Bulletproof Data Parsing active...");
+    console.log("Clinical Dashboard v1.6: Schema sync active...");
 
     const app = initializeApp(firebaseConfig);
     const db = initializeFirestore(app, {
@@ -254,11 +255,9 @@
     function getSafeTime(timestampObj, formatType = 'time') {
         if (!timestampObj) return '--:--';
         try {
-            // Check if it's a Firestore Timestamp
             if (typeof timestampObj.toDate === 'function') {
                 return formatType === 'time' ? timestampObj.toDate().toLocaleTimeString() : timestampObj.toDate().toLocaleString();
             }
-            // Otherwise, treat it as a standard String or Number
             const parsedDate = new Date(timestampObj);
             return formatType === 'time' ? parsedDate.toLocaleTimeString() : parsedDate.toLocaleString();
         } catch (e) {
@@ -269,7 +268,10 @@
     function renderPatientCard(data, docId) {
         const patientList = document.querySelector('.patient-list');
         
-        const status = data.triage_status ? data.triage_status.toUpperCase() : 'GREEN';
+        let statusText = (data.triage_status || 'GREEN').toUpperCase();
+        let status = statusText.includes('RED') ? 'RED' : 
+                     statusText.includes('YELLOW') ? 'YELLOW' : 'GREEN';
+
         const statusColor = status === 'RED' ? 'var(--emergent-red)' : 
                             status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
 
@@ -281,7 +283,7 @@
 
         card.innerHTML = `
             <div class="meta">
-              <strong>ID: ${data.patient_id || 'N/A'} (${data.patient_name || 'Patient'})</strong>
+              <strong>ID: ${data.patient_id || 'N/A'}</strong>
               <div class="status-dot" style="background: ${statusColor}; box-shadow: 0 0 8px ${statusColor};"></div>
             </div>
             <p style="font-size: 0.75rem; opacity: 0.6;">Sync: ${displayTime}</p>
@@ -293,20 +295,39 @@
     }
 
     window.loadPatientDetails = function(data) {
-        document.querySelector('h1').innerHTML = `${data.patient_name || 'Unknown Patient'} <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id || '---'}</span>`;
+        // Patient Header
+        document.querySelector('h1').innerHTML = `Patient File <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id || '---'}</span>`;
         document.getElementById('sync-time').innerText = getSafeTime(data.timestamp, 'full');
         
-        const status = data.triage_status ? data.triage_status.toUpperCase() : 'GREEN';
+        // Triage Status Logic
+        let statusText = (data.triage_status || 'GREEN').toUpperCase();
+        let status = statusText.includes('RED') ? 'RED' : 
+                     statusText.includes('YELLOW') ? 'YELLOW' : 'GREEN';
+
         const statusDisplay = document.getElementById('triage-status-display');
         statusDisplay.innerText = `🔴 ${status}`;
         statusDisplay.style.color = status === 'RED' ? 'var(--emergent-red)' : 'var(--stable-green)';
 
-        const summaries = data.summaries || {};
-        document.getElementById('ischemic-content').innerText = summaries.chest_breathing_summary || data.chest_breathing_summary || "No data.";
-        document.getElementById('meds-content').innerText = summaries.meds_summary || data.meds_summary || "No data.";
-        document.getElementById('hemostasis-content').innerText = summaries.bleeding_summary || data.bleeding_summary || "No data.";
-        document.getElementById('hemo-content').innerText = summaries.wellbeing_summary || data.wellbeing_summary || "No data.";
+        // Reviewed Status Logic
+        const reviewDisplay = document.getElementById('review-status-display');
+        reviewDisplay.innerText = data.reviewed ? 'Reviewed' : 'Pending';
+        reviewDisplay.style.color = data.reviewed ? 'var(--stable-green)' : 'var(--urgent-yellow)';
 
+        // ──────────────────────────────────────────────────────────
+        // THE DATA BINDING FIX: 
+        // We now point directly to the root fields, skipping the 'summaries' map, 
+        // and mapping chest_summary correctly.
+        // ──────────────────────────────────────────────────────────
+        
+        document.getElementById('ischemic-content').innerText = data.chest_summary || "No data reported.";
+        document.getElementById('meds-content').innerText = data.meds_summary || "No data reported.";
+        document.getElementById('hemostasis-content').innerText = data.bleeding_summary || "No data reported.";
+        
+        // Combine Rhythm and Wellbeing into the fourth card cleanly
+        const combinedHemo = `RHYTHM:\n${data.rhythm_summary || "No data."}\n\nWELLBEING:\n${data.wellbeing_summary || "No data."}`;
+        document.getElementById('hemo-content').innerText = combinedHemo;
+
+        // Apply Red-Flag styling border to Ischemic block if status is RED
         const ischemicBox = document.getElementById('ischemic-content');
         if(status === 'RED') {
             ischemicBox.classList.add('red-flag');
