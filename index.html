@@ -27,7 +27,7 @@
       background: var(--deep-navy);
       color: #ffffff;
       height: 100vh;
-      overflow: hidden; /* App-like feel */
+      overflow: hidden; 
       display: flex;
     }
 
@@ -40,10 +40,7 @@
       flex-direction: column;
     }
 
-    .aside-header {
-      padding: 30px;
-      border-bottom: 1px solid var(--glass-border);
-    }
+    .aside-header { padding: 30px; border-bottom: 1px solid var(--glass-border); }
 
     .search-box {
       background: rgba(255,255,255,0.05);
@@ -55,11 +52,7 @@
       margin-top: 15px;
     }
 
-    .patient-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-    }
+    .patient-list { flex: 1; overflow-y: auto; padding: 20px; }
 
     .patient-item {
       padding: 15px;
@@ -85,12 +78,7 @@
       background: radial-gradient(circle at top right, rgba(0, 97, 255, 0.05) 0%, transparent 40%);
     }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-    }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
 
     .pci-metrics {
       display: grid;
@@ -110,11 +98,7 @@
     .metric-card h3 { font-size: 1.8rem; font-weight: 800; margin-top: 5px; }
 
     /* CLINICAL DATA BLOCKS */
-    .clinical-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
-    }
+    .clinical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
 
     .data-card {
       background: var(--glass-white);
@@ -148,11 +132,7 @@
     .red-flag { border-left-color: var(--emergent-red); background: rgba(255, 77, 77, 0.05); }
 
     /* ACTION BAR */
-    .action-bar {
-      margin-top: 40px;
-      display: flex;
-      gap: 15px;
-    }
+    .action-bar { margin-top: 40px; display: flex; gap: 15px; }
 
     .btn {
       padding: 15px 30px;
@@ -166,7 +146,6 @@
     .btn-call { background: var(--medical-blue); color: white; }
     .btn-call:hover { box-shadow: 0 0 20px rgba(0, 97, 255, 0.4); }
     .btn-archive { background: rgba(255,255,255,0.1); color: white; }
-
   </style>
 </head>
 <body>
@@ -186,24 +165,6 @@
         <p style="font-size: 0.75rem; opacity: 0.6;">PCI Date: Feb 12 | Day 7</p>
         <p style="font-size: 0.8rem; color: var(--emergent-red); margin-top: 5px; font-weight: 700;">+ CHEST PAIN | DAPT INTERRUPTED</p>
       </div>
-
-      <div class="patient-item">
-        <div class="meta">
-          <strong>ID: 104</strong>
-          <div class="status-dot" style="background: var(--urgent-yellow);"></div>
-        </div>
-        <p style="font-size: 0.75rem; opacity: 0.6;">PCI Date: Feb 15 | Day 4</p>
-        <p style="font-size: 0.8rem; color: var(--urgent-yellow); margin-top: 5px; font-weight: 700;">+ DYSPNEA (NEW ONSET)</p>
-      </div>
-
-      <div class="patient-item">
-        <div class="meta">
-          <strong>ID: 089</strong>
-          <div class="status-dot" style="background: var(--stable-green);"></div>
-        </div>
-        <p style="font-size: 0.75rem; opacity: 0.6;">PCI Date: Jan 28 | Day 22</p>
-        <p style="font-size: 0.8rem; color: var(--stable-green); margin-top: 5px;">ASYMPTOMATIC</p>
-      </div>
     </div>
   </aside>
 
@@ -215,14 +176,14 @@
       </div>
       <div style="text-align: right;">
         <div style="font-size: 0.8rem; opacity: 0.5;">LAST SYNC</div>
-        <div style="font-weight: 700;">Today, 17:49 IST</div>
+        <div style="font-weight: 700;" id="sync-time">Today, --:--</div>
       </div>
     </header>
 
     <div class="pci-metrics">
       <div class="metric-card" style="border-top: 4px solid var(--emergent-red);">
         <span>Overall Triage Status</span>
-        <h3 style="color: var(--emergent-red);">🔴 EMERGENT</h3>
+        <h3 id="triage-status-display" style="color: var(--emergent-red);">🔴 EMERGENT</h3>
       </div>
       <div class="metric-card">
         <span>Procedure Days Post</span>
@@ -237,39 +198,29 @@
     <div class="clinical-grid">
       <div class="data-card">
         <h4><i class="fa-solid fa-heart-pulse"></i> Ischemic Phenotype</h4>
-        
-        <div class="symptom-note red-flag">
-          <b>Status: SYMPTOMATIC</b><br>
-          Patient reports "heavy pressure" in center of chest lasting 10 minutes. 
-          Happens during light activity. Relief noted with Nitroglycerin.
-          <i>Indication: Possible Sub-acute Stent Thrombosis.</i>
+        <div id="ischemic-content" class="symptom-note red-flag">
+          Select a patient to view clinical data...
         </div>
       </div>
 
       <div class="data-card">
         <h4><i class="fa-solid fa-droplet"></i> Hemostasis & Access</h4>
-        <div class="symptom-note">
-          <b>Status: STABLE</b><br>
-          Access Site: Radial (Wrist). No new swelling or pulsatile mass reported.
-          Denies epistaxis or hematuria.
+        <div id="hemostasis-content" class="symptom-note">
+           Awaiting synchronization...
         </div>
       </div>
 
       <div class="data-card">
-        <h4><i class="fa-solid fa-pills"></i> DAPT Adherence (Safety Net)</h4>
-        <div class="symptom-note red-flag">
-          <b>Status: INTERRUPTED</b><br>
-          Patient reports skipping 2 doses of Brilinta due to cost concerns.
-          Aspirin (81mg) intake is consistent.
-          <i>Immediate Risk: Fatal Stent Clotting.</i>
+        <h4><i class="fa-solid fa-pills"></i> DAPT Adherence</h4>
+        <div id="meds-content" class="symptom-note">
+           Awaiting synchronization...
         </div>
       </div>
 
       <div class="data-card">
         <h4><i class="fa-solid fa-lungs"></i> Hemodynamics</h4>
-        <div class="symptom-note">
-          <b>Status: ASYMPTOMATIC</b><br>
-          Denies DOE, Orthopnea, or PND. Leg edema status: Negative.
+        <div id="hemo-content" class="symptom-note">
+           Awaiting synchronization...
         </div>
       </div>
     </div>
@@ -281,5 +232,85 @@
     </div>
   </main>
 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+    // 1. Firebase Configuration (Replace with your actual keys)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "your-app.firebaseapp.com",
+        projectId: "post-pci-companion",
+        storageBucket: "your-app.appspot.com",
+        messagingSenderId: "YOUR_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 2. Real-Time Triage Listener
+    const reportsRef = collection(db, "clinical_reports");
+    const q = query(reportsRef, orderBy("timestamp", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+        const patientList = document.querySelector('.patient-list');
+        patientList.innerHTML = ''; // Clear current list
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            renderPatientCard(data, doc.id);
+        });
+    });
+
+    // 3. Render Sidebar Cards
+    function renderPatientCard(data, docId) {
+        const patientList = document.querySelector('.patient-list');
+        const statusColor = data.triage_status === 'RED' ? 'var(--emergent-red)' : 
+                            data.triage_status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
+
+        const card = document.createElement('div');
+        card.className = 'patient-item';
+        card.onclick = () => loadPatientDetails(data);
+        
+        card.innerHTML = `
+            <div class="meta">
+              <strong>ID: ${data.patient_id} (${data.patient_name})</strong>
+              <div class="status-dot" style="background: ${statusColor}; box-shadow: 0 0 8px ${statusColor};"></div>
+            </div>
+            <p style="font-size: 0.75rem; opacity: 0.6;">Last Sync: ${data.timestamp.toDate().toLocaleTimeString()}</p>
+            <p style="font-size: 0.8rem; color: ${statusColor}; margin-top: 5px; font-weight: 700;">
+                ${data.triage_status === 'RED' ? '🚨 IMMEDIATE REVIEW REQ.' : 'STABLE MONITORING'}
+            </p>
+        `;
+        patientList.appendChild(card);
+    }
+
+    // 4. Load Detailed Profile into Viewport
+    window.loadPatientDetails = function(data) {
+        // Update Header
+        document.querySelector('h1').innerHTML = `${data.patient_name} <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id}</span>`;
+        document.getElementById('sync-time').innerText = data.timestamp.toDate().toLocaleString();
+        
+        // Update Overall Triage Card
+        const statusDisplay = document.getElementById('triage-status-display');
+        statusDisplay.innerText = `🔴 ${data.triage_status}`;
+        statusDisplay.style.color = data.triage_status === 'RED' ? 'var(--emergent-red)' : 'var(--stable-green)';
+
+        // Inject Summaries into the Clinical Grid
+        document.getElementById('ischemic-content').innerText = data.summaries.chest_breathing_summary;
+        document.getElementById('meds-content').innerText = data.summaries.meds_summary;
+        document.getElementById('hemostasis-content').innerText = data.summaries.bleeding_summary;
+        document.getElementById('hemo-content').innerText = data.summaries.wellbeing_summary;
+
+        // Apply Red-Flag styling if needed
+        const ischemicBox = document.getElementById('ischemic-content');
+        if(data.triage_status === 'RED') {
+            ischemicBox.classList.add('red-flag');
+        } else {
+            ischemicBox.classList.remove('red-flag');
+        }
+    }
+  </script>
 </body>
 </html>
