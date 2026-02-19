@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>HeartCare | Physician Triage & Command Console</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link rel="icon" href="https://www.gstatic.com/images/icons/material/system/2x/favorite_border_black_24dp.png" type="image/png">
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -153,7 +155,7 @@
     </div>
 
     <div class="patient-list">
-      <p style="padding: 20px; opacity: 0.5;">Awaiting live stream...</p>
+      <p style="padding: 20px; opacity: 0.5;">Awaiting live stream from patient_reports...</p>
     </div>
   </aside>
 
@@ -211,7 +213,6 @@
   </main>
 
   <script type="module">
-    // UPDATED SDK TO 10.8.0
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { initializeFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -224,16 +225,18 @@
       appId: "1:36680889455:web:682e2796d40bdd6378899a"
     };
 
-    console.log("Clinical Dashboard v1.3: Forcing named database binding...");
+    console.log("Clinical Dashboard v1.4: Syncing with patient_reports...");
 
     const app = initializeApp(firebaseConfig);
     
-    // THE CRITICAL FIX: The named database goes as the THIRD parameter.
     const db = initializeFirestore(app, {
       experimentalForceLongPolling: true
     }, "post-pcidata");
 
-    const reportsRef = collection(db, "clinical_reports");
+    // THE FIX: Pointing to your exact collection name
+    const reportsRef = collection(db, "patient_reports");
+    
+    // Sorts by timestamp so the newest report is at the top of the sidebar
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
@@ -241,7 +244,7 @@
         patientList.innerHTML = ''; 
 
         if (snapshot.empty) {
-            patientList.innerHTML = '<p style="padding: 20px; opacity: 0.5;">No records found in post-pcidata.</p>';
+            patientList.innerHTML = '<p style="padding: 20px; opacity: 0.5;">No records found in patient_reports yet.</p>';
             return;
         }
 
@@ -255,8 +258,11 @@
 
     function renderPatientCard(data, docId) {
         const patientList = document.querySelector('.patient-list');
-        const statusColor = data.triage_status === 'RED' ? 'var(--emergent-red)' : 
-                            data.triage_status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
+        
+        // Safety fallback: if triage_status is missing, default to GREEN
+        const status = data.triage_status ? data.triage_status.toUpperCase() : 'GREEN';
+        const statusColor = status === 'RED' ? 'var(--emergent-red)' : 
+                            status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
 
         const card = document.createElement('div');
         card.className = 'patient-item';
@@ -269,28 +275,31 @@
             </div>
             <p style="font-size: 0.75rem; opacity: 0.6;">Sync: ${data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : '--'}</p>
             <p style="font-size: 0.8rem; color: ${statusColor}; margin-top: 5px; font-weight: 700;">
-                ${data.triage_status === 'RED' ? '🚨 URGENT TRIAGE' : 'STABLE'}
+                ${status === 'RED' ? '🚨 URGENT TRIAGE' : 'STABLE'}
             </p>
         `;
         patientList.appendChild(card);
     }
 
     window.loadPatientDetails = function(data) {
-        document.querySelector('h1').innerHTML = `${data.patient_name} <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id}</span>`;
+        document.querySelector('h1').innerHTML = `${data.patient_name || 'Unknown Patient'} <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id || '---'}</span>`;
         document.getElementById('sync-time').innerText = data.timestamp ? data.timestamp.toDate().toLocaleString() : '--';
         
+        const status = data.triage_status ? data.triage_status.toUpperCase() : 'GREEN';
         const statusDisplay = document.getElementById('triage-status-display');
-        statusDisplay.innerText = `🔴 ${data.triage_status}`;
-        statusDisplay.style.color = data.triage_status === 'RED' ? 'var(--emergent-red)' : 'var(--stable-green)';
+        statusDisplay.innerText = `🔴 ${status}`;
+        statusDisplay.style.color = status === 'RED' ? 'var(--emergent-red)' : 'var(--stable-green)';
 
+        // Map Firestore fields to the UI grid
+        // Note: Check your GCP documents to ensure these field names exactly match what your bot saves!
         const summaries = data.summaries || {};
-        document.getElementById('ischemic-content').innerText = summaries.chest_breathing_summary || "No data.";
-        document.getElementById('meds-content').innerText = summaries.meds_summary || "No data.";
-        document.getElementById('hemostasis-content').innerText = summaries.bleeding_summary || "No data.";
-        document.getElementById('hemo-content').innerText = summaries.wellbeing_summary || "No data.";
+        document.getElementById('ischemic-content').innerText = summaries.chest_breathing_summary || data.chest_breathing_summary || "No data.";
+        document.getElementById('meds-content').innerText = summaries.meds_summary || data.meds_summary || "No data.";
+        document.getElementById('hemostasis-content').innerText = summaries.bleeding_summary || data.bleeding_summary || "No data.";
+        document.getElementById('hemo-content').innerText = summaries.wellbeing_summary || data.wellbeing_summary || "No data.";
 
         const ischemicBox = document.getElementById('ischemic-content');
-        if(data.triage_status === 'RED') {
+        if(status === 'RED') {
             ischemicBox.classList.add('red-flag');
         } else {
             ischemicBox.classList.remove('red-flag');
