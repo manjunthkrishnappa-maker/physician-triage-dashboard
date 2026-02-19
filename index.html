@@ -31,7 +31,6 @@
       display: flex;
     }
 
-    /* SIDEBAR: PATIENT TRIAGE QUEUE */
     aside {
       width: 350px;
       background: rgba(255, 255, 255, 0.02);
@@ -70,7 +69,6 @@
     .patient-item .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-    /* MAIN VIEWPORT */
     main {
       flex: 1;
       overflow-y: auto;
@@ -97,7 +95,6 @@
     .metric-card span { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
     .metric-card h3 { font-size: 1.8rem; font-weight: 800; margin-top: 5px; }
 
-    /* CLINICAL DATA BLOCKS */
     .clinical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
 
     .data-card {
@@ -131,7 +128,6 @@
 
     .red-flag { border-left-color: var(--emergent-red); background: rgba(255, 77, 77, 0.05); }
 
-    /* ACTION BAR */
     .action-bar { margin-top: 40px; display: flex; gap: 15px; }
 
     .btn {
@@ -157,14 +153,7 @@
     </div>
 
     <div class="patient-list">
-      <div class="patient-item active">
-        <div class="meta">
-          <strong>ID: 001 (Manjunath)</strong>
-          <div class="status-dot" style="background: var(--emergent-red); box-shadow: 0 0 8px var(--emergent-red);"></div>
-        </div>
-        <p style="font-size: 0.75rem; opacity: 0.6;">PCI Date: Feb 12 | Day 7</p>
-        <p style="font-size: 0.8rem; color: var(--emergent-red); margin-top: 5px; font-weight: 700;">+ CHEST PAIN | DAPT INTERRUPTED</p>
-      </div>
+      <p style="padding: 20px; opacity: 0.5;">Awaiting live stream...</p>
     </div>
   </aside>
 
@@ -172,56 +161,45 @@
     <header>
       <div>
         <span style="color: var(--clinical-cyan); font-weight: 700; font-size: 0.8rem; letter-spacing: 2px;">PATIENT CLINICAL PROFILE</span>
-        <h1 style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Manjunath Krishnappa <span style="font-weight: 300; opacity: 0.5;">#001</span></h1>
+        <h1 style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Awaiting Selection</h1>
       </div>
       <div style="text-align: right;">
         <div style="font-size: 0.8rem; opacity: 0.5;">LAST SYNC</div>
-        <div style="font-weight: 700;" id="sync-time">Today, --:--</div>
+        <div style="font-weight: 700;" id="sync-time">--:--</div>
       </div>
     </header>
 
     <div class="pci-metrics">
-      <div class="metric-card" style="border-top: 4px solid var(--emergent-red);">
+      <div class="metric-card">
         <span>Overall Triage Status</span>
-        <h3 id="triage-status-display" style="color: var(--emergent-red);">🔴 EMERGENT</h3>
+        <h3 id="triage-status-display">--</h3>
       </div>
       <div class="metric-card">
         <span>Procedure Days Post</span>
-        <h3>7 Days</h3>
+        <h3>--</h3>
       </div>
       <div class="metric-card">
         <span>Stent Location</span>
-        <h3>LAD (Proximal)</h3>
+        <h3>--</h3>
       </div>
     </div>
 
     <div class="clinical-grid">
       <div class="data-card">
         <h4><i class="fa-solid fa-heart-pulse"></i> Ischemic Phenotype</h4>
-        <div id="ischemic-content" class="symptom-note red-flag">
-          Select a patient to view clinical data...
-        </div>
+        <div id="ischemic-content" class="symptom-note">Select a patient record to begin review.</div>
       </div>
-
       <div class="data-card">
         <h4><i class="fa-solid fa-droplet"></i> Hemostasis & Access</h4>
-        <div id="hemostasis-content" class="symptom-note">
-           Awaiting synchronization...
-        </div>
+        <div id="hemostasis-content" class="symptom-note">---</div>
       </div>
-
       <div class="data-card">
         <h4><i class="fa-solid fa-pills"></i> DAPT Adherence</h4>
-        <div id="meds-content" class="symptom-note">
-           Awaiting synchronization...
-        </div>
+        <div id="meds-content" class="symptom-note">---</div>
       </div>
-
       <div class="data-card">
         <h4><i class="fa-solid fa-lungs"></i> Hemodynamics</h4>
-        <div id="hemo-content" class="symptom-note">
-           Awaiting synchronization...
-        </div>
+        <div id="hemo-content" class="symptom-note">---</div>
       </div>
     </div>
 
@@ -234,42 +212,47 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-    // 1. Firebase Configuration (Replace with your actual keys)
+    // IMPORT FIX: Added initializeFirestore here
+    import { initializeFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
     const firebaseConfig = {
-        apiKey: "AIzaSyCBww28IM8l9OpwR-6ET6CJO9kxkUsP_SI",
-  authDomain: "post-pci-companion.firebaseapp.com",
-  projectId: "post-pci-companion",
-  storageBucket: "post-pci-companion.firebasestorage.app",
-  messagingSenderId: "36680889455",
-  appId: "1:36680889455:web:682e2796d40bdd6378899a",
-  measurementId: "G-SK49NE7TG4"
+      apiKey: "AIzaSyCBww28IM8l9OpwR-6ET6CJO9kxkUsP_SI",
+      authDomain: "post-pci-companion.firebaseapp.com",
+      projectId: "post-pci-companion",
+      storageBucket: "post-pci-companion.firebasestorage.app",
+      messagingSenderId: "36680889455",
+      appId: "1:36680889455:web:682e2796d40bdd6378899a"
     };
 
-    console.log("Clinical Dashboard v1.2: Connecting to post-pcidata...");
+    console.log("Clinical Dashboard v1.2: Initializing Handshake with post-pcidata...");
 
     const app = initializeApp(firebaseConfig);
+    
+    // INITIALIZATION FIX: Using initializeFirestore correctly with named database
     const db = initializeFirestore(app, {
       experimentalForceLongPolling: true,
-      databaseId: "post-pcidata",
-      useFetchStreams: false,
+      databaseId: "post-pcidata"
     });
 
-    // 2. Real-Time Triage Listener
     const reportsRef = collection(db, "clinical_reports");
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
         const patientList = document.querySelector('.patient-list');
-        patientList.innerHTML = ''; // Clear current list
+        patientList.innerHTML = ''; 
+
+        if (snapshot.empty) {
+            patientList.innerHTML = '<p style="padding: 20px; opacity: 0.5;">No records found in post-pcidata.</p>';
+        }
 
         snapshot.forEach((doc) => {
             const data = doc.data();
             renderPatientCard(data, doc.id);
         });
+    }, (error) => {
+        console.error("Firestore Sync Error:", error);
     });
 
-    // 3. Render Sidebar Cards
     function renderPatientCard(data, docId) {
         const patientList = document.querySelector('.patient-list');
         const statusColor = data.triage_status === 'RED' ? 'var(--emergent-red)' : 
@@ -277,39 +260,35 @@
 
         const card = document.createElement('div');
         card.className = 'patient-item';
-        card.onclick = () => loadPatientDetails(data);
+        card.onclick = () => window.loadPatientDetails(data);
         
         card.innerHTML = `
             <div class="meta">
-              <strong>ID: ${data.patient_id} (${data.patient_name})</strong>
+              <strong>ID: ${data.patient_id || 'N/A'} (${data.patient_name || 'Patient'})</strong>
               <div class="status-dot" style="background: ${statusColor}; box-shadow: 0 0 8px ${statusColor};"></div>
             </div>
-            <p style="font-size: 0.75rem; opacity: 0.6;">Last Sync: ${data.timestamp.toDate().toLocaleTimeString()}</p>
+            <p style="font-size: 0.75rem; opacity: 0.6;">Sync: ${data.timestamp ? data.timestamp.toDate().toLocaleTimeString() : '--'}</p>
             <p style="font-size: 0.8rem; color: ${statusColor}; margin-top: 5px; font-weight: 700;">
-                ${data.triage_status === 'RED' ? '🚨 IMMEDIATE REVIEW REQ.' : 'STABLE MONITORING'}
+                ${data.triage_status === 'RED' ? '🚨 URGENT TRIAGE' : 'STABLE'}
             </p>
         `;
         patientList.appendChild(card);
     }
 
-    // 4. Load Detailed Profile into Viewport
     window.loadPatientDetails = function(data) {
-        // Update Header
         document.querySelector('h1').innerHTML = `${data.patient_name} <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id}</span>`;
-        document.getElementById('sync-time').innerText = data.timestamp.toDate().toLocaleString();
+        document.getElementById('sync-time').innerText = data.timestamp ? data.timestamp.toDate().toLocaleString() : '--';
         
-        // Update Overall Triage Card
         const statusDisplay = document.getElementById('triage-status-display');
         statusDisplay.innerText = `🔴 ${data.triage_status}`;
         statusDisplay.style.color = data.triage_status === 'RED' ? 'var(--emergent-red)' : 'var(--stable-green)';
 
-        // Inject Summaries into the Clinical Grid
-        document.getElementById('ischemic-content').innerText = data.summaries.chest_breathing_summary;
-        document.getElementById('meds-content').innerText = data.summaries.meds_summary;
-        document.getElementById('hemostasis-content').innerText = data.summaries.bleeding_summary;
-        document.getElementById('hemo-content').innerText = data.summaries.wellbeing_summary;
+        const summaries = data.summaries || {};
+        document.getElementById('ischemic-content').innerText = summaries.chest_breathing_summary || "No data.";
+        document.getElementById('meds-content').innerText = summaries.meds_summary || "No data.";
+        document.getElementById('hemostasis-content').innerText = summaries.bleeding_summary || "No data.";
+        document.getElementById('hemo-content').innerText = summaries.wellbeing_summary || "No data.";
 
-        // Apply Red-Flag styling if needed
         const ischemicBox = document.getElementById('ischemic-content');
         if(data.triage_status === 'RED') {
             ischemicBox.classList.add('red-flag');
