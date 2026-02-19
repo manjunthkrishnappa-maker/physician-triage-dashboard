@@ -234,7 +234,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { initializeFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
     // 1. Firebase Configuration (Replace with your actual keys)
     const firebaseConfig = {
         apiKey: "AIzaSyCBww28IM8l9OpwR-6ET6CJO9kxkUsP_SI",
@@ -246,10 +246,12 @@
   measurementId: "G-SK49NE7TG4"
     };
 
+    console.log("Clinical Dashboard v1.2: Connecting to post-pcidata...");
+
     const app = initializeApp(firebaseConfig);
     const db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
       databaseId: "post-pcidata",
-      experimentalForceLongPolling: true, 
       useFetchStreams: false,
     });
 
