@@ -38,6 +38,7 @@
     .search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; outline: none; transition: 0.3s; }
     .search-box:focus { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); }
     
+    /* FILTER TABS */
     .filter-tabs { display: flex; gap: 10px; padding: 0 30px 20px 30px; border-bottom: 1px solid var(--glass-border); }
     .filter-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.3s; }
     .filter-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
@@ -51,6 +52,7 @@
     .patient-item .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .status-dot { width: 12px; height: 12px; border-radius: 50%; }
 
+    /* ELITE UI: SYMPTOM TAGS */
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
     .symptom-tag { font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px; }
     .tag-red { background: rgba(255, 77, 77, 0.15); color: var(--emergent-red); border: 1px solid rgba(255, 77, 77, 0.3); }
@@ -71,7 +73,7 @@
     .symptom-note { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; font-size: 0.95rem; color: rgba(255,255,255,0.8); line-height: 1.6; white-space: pre-wrap; border-left: 4px solid var(--medical-blue); }
     .red-flag { border-left-color: var(--emergent-red); background: rgba(255, 77, 77, 0.05); }
 
-    /* NEW: CLINICAL ACTION LOG AREA */
+    /* CLINICAL ACTION LOG AREA */
     .resolution-panel { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; margin-top: 20px; }
     .resolution-panel h4 { font-size: 0.9rem; color: var(--urgent-yellow); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
     .note-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: #fff; font-family: inherit; font-size: 0.95rem; resize: vertical; min-height: 80px; outline: none; margin-bottom: 20px; transition: 0.3s; }
@@ -183,9 +185,13 @@
     
     window.allPatients = []; 
     window.currentFilter = 'all';
-    window.searchQuery = ''; // NEW: Track search input
+    window.searchQuery = ''; 
 
-    // WIRED: Listen to Search Box typing
+    // REQUEST NOTIFICATION PERMISSIONS ON LOAD FOR STATION ALARM
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+
     document.getElementById('searchInput').addEventListener('input', (e) => {
         window.searchQuery = e.target.value.trim().toLowerCase();
         renderPatientList();
@@ -195,11 +201,40 @@
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
+        // 1. Update the local array and render the UI list
         window.allPatients = [];
         snapshot.forEach((doc) => {
             window.allPatients.push({ id: doc.id, data: doc.data() });
         });
         renderPatientList();
+
+        // 2. STATION ALARM LOGIC: Listen specifically for brand new documents
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const newPatient = change.doc.data();
+                
+                // Trigger alarm if it is RED and has not been reviewed
+                if (newPatient.triage_status === 'RED' && !newPatient.reviewed) {
+                    
+                    // Audio Chime
+                    const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                    alarmSound.play().catch(e => console.log("Audio autoplay blocked until user clicks the page."));
+                    
+                    // Desktop Push Notification
+                    if (Notification.permission === "granted") {
+                        const notification = new Notification("🚨 URGENT: Cardiology Triage Alert", {
+                            body: `Patient ${newPatient.patient_id || 'Unknown'} has triggered a RED alert. Immediate review required.`,
+                            icon: "https://www.gstatic.com/images/icons/material/system/2x/warning_amber_red_24dp.png"
+                        });
+                        
+                        notification.onclick = function() {
+                            window.focus();
+                            this.close();
+                        };
+                    }
+                }
+            }
+        });
     });
 
     window.setFilter = function(filterType) {
@@ -213,7 +248,6 @@
         const patientList = document.getElementById('patient-list');
         patientList.innerHTML = ''; 
 
-        // Apply Both Filter AND Search logic
         const filteredPatients = window.allPatients.filter(patient => {
             const matchesFilter = (window.currentFilter === 'all') || (patient.data.reviewed !== true);
             const matchesSearch = (patient.data.patient_id || "").toLowerCase().includes(window.searchQuery);
@@ -309,7 +343,6 @@
         if(status === 'RED' && !isReviewed) ischemicBox.classList.add('red-flag');
         else ischemicBox.classList.remove('red-flag');
 
-        // NEW: Load existing clinical note, or clear the box for a new one
         const noteBox = document.getElementById('physician-note');
         noteBox.value = data.resolution_note || '';
 
@@ -318,11 +351,11 @@
         if (isReviewed) {
             btnReview.disabled = true;
             btnReview.innerHTML = `<i class="fa-solid fa-lock"></i> Record Locked & Signed`;
-            noteBox.disabled = true; // Lock the audit trail
+            noteBox.disabled = true; 
         } else {
             btnReview.disabled = false;
             btnReview.innerHTML = `<i class="fa-solid fa-file-signature"></i> Sign & Mark Reviewed`;
-            noteBox.disabled = false; // Allow typing
+            noteBox.disabled = false; 
         }
     }
 
@@ -338,7 +371,6 @@
 
         try {
             const patientDocRef = doc(window.db, "patient_reports", window.currentDocId);
-            // UPDATED: Save the review status AND the clinical note to Firestore
             await updateDoc(patientDocRef, {
                 reviewed: true,
                 resolution_note: noteBox.value.trim(),
