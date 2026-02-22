@@ -207,10 +207,7 @@
             window.allPatients.push({ id: doc.id, data: doc.data() });
         });
 
-        // =====================================================================
-        // NEW FIX: EXPLICIT JAVASCRIPT SORTING TO GUARANTEE NEWEST AT TOP
-        // This bridges the gap between old string timestamps and new server timestamps.
-        // =====================================================================
+        // Explicit JavaScript Sorting (Highest millisecond/newest first)
         window.allPatients.sort((a, b) => {
             let timeA = 0;
             let timeB = 0;
@@ -222,10 +219,9 @@
                 timeB = typeof b.data.timestamp.toDate === 'function' ? b.data.timestamp.toDate().getTime() : new Date(b.data.timestamp).getTime();
             }
             
-            return timeB - timeA; // Sorts descending (highest millisecond/newest first)
+            return timeB - timeA; 
         });
 
-        // Render the strictly sorted list
         renderPatientList();
 
         // 2. STATION ALARM LOGIC: Listen specifically for brand new documents
@@ -236,11 +232,9 @@
                 // Trigger alarm if it is RED and has not been reviewed
                 if (newPatient.triage_status === 'RED' && !newPatient.reviewed) {
                     
-                    // Audio Chime
                     const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                     alarmSound.play().catch(e => console.log("Audio autoplay blocked until user clicks the page."));
                     
-                    // Desktop Push Notification
                     if (Notification.permission === "granted") {
                         const notification = new Notification("🚨 URGENT: Cardiology Triage Alert", {
                             body: `Patient ${newPatient.patient_id || 'Unknown'} has triggered a RED alert. Immediate review required.`,
@@ -343,8 +337,20 @@
         const status = data.triage_status || 'GREEN';
         const statusDisplay = document.getElementById('triage-status-display');
         
-        statusDisplay.innerText = isReviewed ? `🟢 CLEARED` : `🔴 ${status}`;
-        statusDisplay.style.color = isReviewed ? 'var(--stable-green)' : (status === 'RED' ? 'var(--emergent-red)' : 'var(--urgent-yellow)');
+        // DYNAMIC EMOJI FIX APPLIED HERE
+        let emoji = '🟢';
+        let statusColor = 'var(--stable-green)';
+        
+        if (status === 'RED') {
+            emoji = '🔴';
+            statusColor = 'var(--emergent-red)';
+        } else if (status === 'YELLOW') {
+            emoji = '🟡';
+            statusColor = 'var(--urgent-yellow)';
+        }
+        
+        statusDisplay.innerText = isReviewed ? `🟢 CLEARED` : `${emoji} ${status}`;
+        statusDisplay.style.color = isReviewed ? 'var(--stable-green)' : statusColor;
 
         const reviewDisplay = document.getElementById('review-status-display');
         reviewDisplay.innerText = isReviewed ? 'Reviewed' : 'Pending Review';
