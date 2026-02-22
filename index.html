@@ -35,16 +35,15 @@
     /* SIDEBAR */
     aside { width: 350px; background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
     .aside-header { padding: 30px 30px 15px 30px; }
-    .search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; }
+    .search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; outline: none; transition: 0.3s; }
+    .search-box:focus { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); }
     
-    /* NEW FILTER TABS */
     .filter-tabs { display: flex; gap: 10px; padding: 0 30px 20px 30px; border-bottom: 1px solid var(--glass-border); }
     .filter-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.3s; }
     .filter-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
     .filter-btn.active { background: rgba(0, 242, 254, 0.1); color: var(--clinical-cyan); border-color: rgba(0, 242, 254, 0.3); }
 
     .patient-list { flex: 1; overflow-y: auto; padding: 20px; }
-
     .patient-item { padding: 15px; border-radius: 16px; background: var(--glass-white); margin-bottom: 10px; border: 1px solid var(--glass-border); cursor: pointer; transition: 0.3s; position: relative; }
     .patient-item:hover { background: rgba(255,255,255,0.08); }
     .patient-item.active { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); }
@@ -52,7 +51,6 @@
     .patient-item .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .status-dot { width: 12px; height: 12px; border-radius: 50%; }
 
-    /* ELITE UI: SYMPTOM TAGS */
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
     .symptom-tag { font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px; }
     .tag-red { background: rgba(255, 77, 77, 0.15); color: var(--emergent-red); border: 1px solid rgba(255, 77, 77, 0.3); }
@@ -67,13 +65,20 @@
     .metric-card span { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
     .metric-card h3 { font-size: 1.8rem; font-weight: 800; margin-top: 5px; }
 
-    .clinical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+    .clinical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
     .data-card { background: var(--glass-white); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 30px; }
     .data-card h4 { font-size: 1rem; color: var(--clinical-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
     .symptom-note { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; font-size: 0.95rem; color: rgba(255,255,255,0.8); line-height: 1.6; white-space: pre-wrap; border-left: 4px solid var(--medical-blue); }
     .red-flag { border-left-color: var(--emergent-red); background: rgba(255, 77, 77, 0.05); }
 
-    .action-bar { margin-top: 40px; display: flex; gap: 15px; }
+    /* NEW: CLINICAL ACTION LOG AREA */
+    .resolution-panel { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; margin-top: 20px; }
+    .resolution-panel h4 { font-size: 0.9rem; color: var(--urgent-yellow); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .note-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: #fff; font-family: inherit; font-size: 0.95rem; resize: vertical; min-height: 80px; outline: none; margin-bottom: 20px; transition: 0.3s; }
+    .note-input:focus { border-color: var(--clinical-cyan); }
+    .note-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .action-bar { display: flex; gap: 15px; }
     .btn { padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-call { background: var(--medical-blue); color: white; }
@@ -146,9 +151,14 @@
       </div>
     </div>
 
-    <div class="action-bar">
-      <button class="btn btn-call" id="btn-contact" disabled><i class="fa-solid fa-phone"></i> Initiate Patient Contact</button>
-      <button class="btn btn-archive" id="btn-review" disabled onclick="markAsReviewed()"><i class="fa-solid fa-check-double"></i> Mark as Reviewed</button>
+    <div class="resolution-panel">
+      <h4><i class="fa-solid fa-user-doctor"></i> Clinical Action Log</h4>
+      <textarea id="physician-note" class="note-input" placeholder="Document patient contact, medication adjustments, or triage resolution here before marking as reviewed..."></textarea>
+      
+      <div class="action-bar">
+        <button class="btn btn-call" id="btn-contact" disabled><i class="fa-solid fa-phone"></i> Initiate Patient Contact</button>
+        <button class="btn btn-archive" id="btn-review" disabled onclick="markAsReviewed()"><i class="fa-solid fa-check-double"></i> Sign & Mark Reviewed</button>
+      </div>
     </div>
   </main>
 
@@ -171,46 +181,43 @@
     window.db = db;
     window.currentDocId = null;
     
-    // NEW: State management for filtering
     window.allPatients = []; 
     window.currentFilter = 'all';
+    window.searchQuery = ''; // NEW: Track search input
+
+    // WIRED: Listen to Search Box typing
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        window.searchQuery = e.target.value.trim().toLowerCase();
+        renderPatientList();
+    });
 
     const reportsRef = collection(db, "patient_reports");
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
-        // Save the raw stream into our local array, maintaining descending order
         window.allPatients = [];
         snapshot.forEach((doc) => {
             window.allPatients.push({ id: doc.id, data: doc.data() });
         });
-        
-        // Trigger the UI render
         renderPatientList();
     });
 
-    // NEW: Filter toggle logic
     window.setFilter = function(filterType) {
         window.currentFilter = filterType;
-        
-        // Toggle active button UI
         document.getElementById('filter-all').classList.toggle('active', filterType === 'all');
         document.getElementById('filter-unreviewed').classList.toggle('active', filterType === 'unreviewed');
-        
         renderPatientList();
     };
 
-    // NEW: Master render function that applies the filter
     function renderPatientList() {
         const patientList = document.getElementById('patient-list');
         patientList.innerHTML = ''; 
 
-        // Apply filter
+        // Apply Both Filter AND Search logic
         const filteredPatients = window.allPatients.filter(patient => {
-            if (window.currentFilter === 'unreviewed') {
-                return patient.data.reviewed !== true;
-            }
-            return true; // 'all' filter
+            const matchesFilter = (window.currentFilter === 'all') || (patient.data.reviewed !== true);
+            const matchesSearch = (patient.data.patient_id || "").toLowerCase().includes(window.searchQuery);
+            return matchesFilter && matchesSearch;
         });
 
         if (filteredPatients.length === 0) {
@@ -218,7 +225,6 @@
             return;
         }
 
-        // Render the filtered array (which is already sorted newest-to-oldest)
         filteredPatients.forEach(patient => {
             renderPatientCard(patient.data, patient.id);
         });
@@ -303,14 +309,20 @@
         if(status === 'RED' && !isReviewed) ischemicBox.classList.add('red-flag');
         else ischemicBox.classList.remove('red-flag');
 
+        // NEW: Load existing clinical note, or clear the box for a new one
+        const noteBox = document.getElementById('physician-note');
+        noteBox.value = data.resolution_note || '';
+
         document.getElementById('btn-contact').disabled = false;
         const btnReview = document.getElementById('btn-review');
         if (isReviewed) {
             btnReview.disabled = true;
-            btnReview.innerHTML = `<i class="fa-solid fa-check"></i> Already Reviewed`;
+            btnReview.innerHTML = `<i class="fa-solid fa-lock"></i> Record Locked & Signed`;
+            noteBox.disabled = true; // Lock the audit trail
         } else {
             btnReview.disabled = false;
-            btnReview.innerHTML = `<i class="fa-solid fa-check-double"></i> Mark as Reviewed`;
+            btnReview.innerHTML = `<i class="fa-solid fa-file-signature"></i> Sign & Mark Reviewed`;
+            noteBox.disabled = false; // Allow typing
         }
     }
 
@@ -318,19 +330,26 @@
         if (!window.currentDocId) return;
         
         const btnReview = document.getElementById('btn-review');
-        btnReview.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Updating...`;
+        const noteBox = document.getElementById('physician-note');
+        
+        btnReview.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
         btnReview.disabled = true;
+        noteBox.disabled = true;
 
         try {
             const patientDocRef = doc(window.db, "patient_reports", window.currentDocId);
+            // UPDATED: Save the review status AND the clinical note to Firestore
             await updateDoc(patientDocRef, {
-                reviewed: true
+                reviewed: true,
+                resolution_note: noteBox.value.trim(),
+                reviewed_timestamp: new Date().toISOString()
             });
-            console.log("Patient marked as reviewed successfully.");
+            console.log("Patient record signed and sealed.");
         } catch (error) {
             console.error("Error updating document: ", error);
             btnReview.innerHTML = `Error. Try Again.`;
             btnReview.disabled = false;
+            noteBox.disabled = false;
         }
     }
   </script>
