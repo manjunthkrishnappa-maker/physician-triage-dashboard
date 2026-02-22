@@ -201,11 +201,31 @@
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
-        // 1. Update the local array and render the UI list
+        // 1. Update the local array
         window.allPatients = [];
         snapshot.forEach((doc) => {
             window.allPatients.push({ id: doc.id, data: doc.data() });
         });
+
+        // =====================================================================
+        // NEW FIX: EXPLICIT JAVASCRIPT SORTING TO GUARANTEE NEWEST AT TOP
+        // This bridges the gap between old string timestamps and new server timestamps.
+        // =====================================================================
+        window.allPatients.sort((a, b) => {
+            let timeA = 0;
+            let timeB = 0;
+            
+            if (a.data.timestamp) {
+                timeA = typeof a.data.timestamp.toDate === 'function' ? a.data.timestamp.toDate().getTime() : new Date(a.data.timestamp).getTime();
+            }
+            if (b.data.timestamp) {
+                timeB = typeof b.data.timestamp.toDate === 'function' ? b.data.timestamp.toDate().getTime() : new Date(b.data.timestamp).getTime();
+            }
+            
+            return timeB - timeA; // Sorts descending (highest millisecond/newest first)
+        });
+
+        // Render the strictly sorted list
         renderPatientList();
 
         // 2. STATION ALARM LOGIC: Listen specifically for brand new documents
