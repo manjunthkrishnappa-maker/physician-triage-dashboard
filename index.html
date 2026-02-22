@@ -34,13 +34,21 @@
 
     /* SIDEBAR */
     aside { width: 350px; background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
-    .aside-header { padding: 30px; border-bottom: 1px solid var(--glass-border); }
+    .aside-header { padding: 30px 30px 15px 30px; }
     .search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; }
+    
+    /* NEW FILTER TABS */
+    .filter-tabs { display: flex; gap: 10px; padding: 0 30px 20px 30px; border-bottom: 1px solid var(--glass-border); }
+    .filter-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.3s; }
+    .filter-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .filter-btn.active { background: rgba(0, 242, 254, 0.1); color: var(--clinical-cyan); border-color: rgba(0, 242, 254, 0.3); }
+
     .patient-list { flex: 1; overflow-y: auto; padding: 20px; }
 
-    .patient-item { padding: 15px; border-radius: 16px; background: var(--glass-white); margin-bottom: 10px; border: 1px solid var(--glass-border); cursor: pointer; transition: 0.3s; }
+    .patient-item { padding: 15px; border-radius: 16px; background: var(--glass-white); margin-bottom: 10px; border: 1px solid var(--glass-border); cursor: pointer; transition: 0.3s; position: relative; }
     .patient-item:hover { background: rgba(255,255,255,0.08); }
     .patient-item.active { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); }
+    .patient-item.reviewed { opacity: 0.5; border-color: transparent; }
     .patient-item .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .status-dot { width: 12px; height: 12px; border-radius: 50%; }
 
@@ -55,7 +63,7 @@
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
     
     .pci-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-    .metric-card { background: var(--glass-white); padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border); }
+    .metric-card { background: var(--glass-white); padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border); transition: 0.3s; }
     .metric-card span { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
     .metric-card h3 { font-size: 1.8rem; font-weight: 800; margin-top: 5px; }
 
@@ -66,10 +74,12 @@
     .red-flag { border-left-color: var(--emergent-red); background: rgba(255, 77, 77, 0.05); }
 
     .action-bar { margin-top: 40px; display: flex; gap: 15px; }
-    .btn { padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; }
+    .btn { padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-call { background: var(--medical-blue); color: white; }
-    .btn-call:hover { box-shadow: 0 0 20px rgba(0, 97, 255, 0.4); }
+    .btn-call:hover:not(:disabled) { box-shadow: 0 0 20px rgba(0, 97, 255, 0.4); }
     .btn-archive { background: rgba(255,255,255,0.1); color: white; }
+    .btn-archive:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body>
@@ -77,9 +87,15 @@
   <aside>
     <div class="aside-header">
       <h2 style="font-size: 1.2rem; font-weight: 800;"><i class="fa-solid fa-tower-broadcast" style="color: var(--clinical-cyan);"></i> CLINICAL TRIAGE</h2>
-      <input type="text" class="search-box" placeholder="Search Patient ID...">
+      <input type="text" class="search-box" id="searchInput" placeholder="Search Patient ID...">
     </div>
-    <div class="patient-list">
+    
+    <div class="filter-tabs">
+      <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">All Patients</button>
+      <button class="filter-btn" id="filter-unreviewed" onclick="setFilter('unreviewed')">Needs Review</button>
+    </div>
+
+    <div class="patient-list" id="patient-list">
       <p style="padding: 20px; opacity: 0.5;">Awaiting live stream from patient_reports...</p>
     </div>
   </aside>
@@ -88,7 +104,7 @@
     <header>
       <div>
         <span style="color: var(--clinical-cyan); font-weight: 700; font-size: 0.8rem; letter-spacing: 2px;">PATIENT CLINICAL PROFILE</span>
-        <h1 style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Awaiting Selection</h1>
+        <h1 id="patient-name-display" style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Awaiting Selection</h1>
       </div>
       <div style="text-align: right;">
         <div style="font-size: 0.8rem; opacity: 0.5;">LAST SYNC</div>
@@ -97,7 +113,7 @@
     </header>
 
     <div class="pci-metrics">
-      <div class="metric-card">
+      <div class="metric-card" id="status-card">
         <span>Overall Triage Status</span>
         <h3 id="triage-status-display">--</h3>
       </div>
@@ -131,14 +147,14 @@
     </div>
 
     <div class="action-bar">
-      <button class="btn btn-call"><i class="fa-solid fa-phone"></i> Initiate Patient Contact</button>
-      <button class="btn btn-archive">Mark as Reviewed</button>
+      <button class="btn btn-call" id="btn-contact" disabled><i class="fa-solid fa-phone"></i> Initiate Patient Contact</button>
+      <button class="btn btn-archive" id="btn-review" disabled onclick="markAsReviewed()"><i class="fa-solid fa-check-double"></i> Mark as Reviewed</button>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { initializeFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCBww28IM8l9OpwR-6ET6CJO9kxkUsP_SI",
@@ -151,21 +167,62 @@
 
     const app = initializeApp(firebaseConfig);
     const db = initializeFirestore(app, { experimentalForceLongPolling: true }, "post-pcidata");
+    
+    window.db = db;
+    window.currentDocId = null;
+    
+    // NEW: State management for filtering
+    window.allPatients = []; 
+    window.currentFilter = 'all';
 
     const reportsRef = collection(db, "patient_reports");
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
-        const patientList = document.querySelector('.patient-list');
+        // Save the raw stream into our local array, maintaining descending order
+        window.allPatients = [];
+        snapshot.forEach((doc) => {
+            window.allPatients.push({ id: doc.id, data: doc.data() });
+        });
+        
+        // Trigger the UI render
+        renderPatientList();
+    });
+
+    // NEW: Filter toggle logic
+    window.setFilter = function(filterType) {
+        window.currentFilter = filterType;
+        
+        // Toggle active button UI
+        document.getElementById('filter-all').classList.toggle('active', filterType === 'all');
+        document.getElementById('filter-unreviewed').classList.toggle('active', filterType === 'unreviewed');
+        
+        renderPatientList();
+    };
+
+    // NEW: Master render function that applies the filter
+    function renderPatientList() {
+        const patientList = document.getElementById('patient-list');
         patientList.innerHTML = ''; 
 
-        if (snapshot.empty) {
-            patientList.innerHTML = '<p style="padding: 20px; opacity: 0.5;">No records found.</p>';
+        // Apply filter
+        const filteredPatients = window.allPatients.filter(patient => {
+            if (window.currentFilter === 'unreviewed') {
+                return patient.data.reviewed !== true;
+            }
+            return true; // 'all' filter
+        });
+
+        if (filteredPatients.length === 0) {
+            patientList.innerHTML = '<p style="padding: 20px; opacity: 0.5;">No records found matching this view.</p>';
             return;
         }
 
-        snapshot.forEach((doc) => { renderPatientCard(doc.data(), doc.id); });
-    });
+        // Render the filtered array (which is already sorted newest-to-oldest)
+        filteredPatients.forEach(patient => {
+            renderPatientCard(patient.data, patient.id);
+        });
+    }
 
     function getSafeTime(timestampObj) {
         if (!timestampObj) return '--:--';
@@ -175,28 +232,34 @@
     }
 
     function renderPatientCard(data, docId) {
-        const patientList = document.querySelector('.patient-list');
+        const patientList = document.getElementById('patient-list');
         const status = data.triage_status || 'GREEN';
-        const statusColor = status === 'RED' ? 'var(--emergent-red)' : status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
+        const isReviewed = data.reviewed === true;
         
-        // Elite UI: Generate dynamic symptom tags based on the database booleans
+        const statusColor = isReviewed ? 'var(--stable-green)' : (status === 'RED' ? 'var(--emergent-red)' : status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)');
+        
         let tagsHTML = '';
         const flags = data.symptom_flags || {};
         
-        if (flags.has_chest_pain) tagsHTML += `<span class="symptom-tag tag-red">+ CHEST PAIN</span>`;
-        if (flags.has_syncope) tagsHTML += `<span class="symptom-tag tag-red">+ SYNCOPE</span>`;
-        if (flags.antiplatelet_stopped) tagsHTML += `<span class="symptom-tag tag-red">+ DAPT INTERRUPTED</span>`;
-        if (flags.major_bleeding) tagsHTML += `<span class="symptom-tag tag-red">+ BLEEDING</span>`;
-        if (flags.access_site_issue) tagsHTML += `<span class="symptom-tag tag-yellow">+ SITE ISSUE</span>`;
-        if (flags.has_sob) tagsHTML += `<span class="symptom-tag tag-yellow">+ SHORT OF BREATH</span>`;
+        if (!isReviewed) {
+            if (flags.has_chest_pain) tagsHTML += `<span class="symptom-tag tag-red">+ CHEST PAIN</span>`;
+            if (flags.has_syncope) tagsHTML += `<span class="symptom-tag tag-red">+ SYNCOPE</span>`;
+            if (flags.antiplatelet_stopped) tagsHTML += `<span class="symptom-tag tag-red">+ DAPT INTERRUPTED</span>`;
+            if (flags.major_bleeding) tagsHTML += `<span class="symptom-tag tag-red">+ BLEEDING</span>`;
+            if (flags.access_site_issue) tagsHTML += `<span class="symptom-tag tag-yellow">+ SITE ISSUE</span>`;
+            if (flags.has_sob) tagsHTML += `<span class="symptom-tag tag-yellow">+ SHORT OF BREATH</span>`;
+        } else {
+            tagsHTML += `<span class="symptom-tag" style="background: rgba(0, 217, 126, 0.15); color: var(--stable-green);">✓ CLEARED</span>`;
+        }
 
         const card = document.createElement('div');
-        card.className = 'patient-item';
+        card.className = `patient-item ${isReviewed ? 'reviewed' : ''}`;
+        if (window.currentDocId === docId) card.classList.add('active');
+
         card.onclick = () => {
-            // Remove active class from all, add to this one
             document.querySelectorAll('.patient-item').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            window.loadPatientDetails(data);
+            window.loadPatientDetails(data, docId);
         };
         
         card.innerHTML = `
@@ -210,29 +273,65 @@
         patientList.appendChild(card);
     }
 
-    window.loadPatientDetails = function(data) {
-        document.querySelector('h1').innerHTML = `Patient File <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id || '---'}</span>`;
+    window.loadPatientDetails = function(data, docId) {
+        window.currentDocId = docId;
+        const isReviewed = data.reviewed === true;
+
+        document.getElementById('patient-name-display').innerHTML = `Patient File <span style="font-weight: 300; opacity: 0.5;">#${data.patient_id || '---'}</span>`;
         document.getElementById('sync-time').innerText = getSafeTime(data.timestamp);
         
         const status = data.triage_status || 'GREEN';
         const statusDisplay = document.getElementById('triage-status-display');
-        statusDisplay.innerText = `🔴 ${status}`;
-        statusDisplay.style.color = status === 'RED' ? 'var(--emergent-red)' : status === 'YELLOW' ? 'var(--urgent-yellow)' : 'var(--stable-green)';
+        
+        statusDisplay.innerText = isReviewed ? `🟢 CLEARED` : `🔴 ${status}`;
+        statusDisplay.style.color = isReviewed ? 'var(--stable-green)' : (status === 'RED' ? 'var(--emergent-red)' : 'var(--urgent-yellow)');
 
         const reviewDisplay = document.getElementById('review-status-display');
-        reviewDisplay.innerText = data.reviewed ? 'Reviewed' : 'Pending Review';
-        reviewDisplay.style.color = data.reviewed ? 'var(--stable-green)' : 'var(--urgent-yellow)';
+        reviewDisplay.innerText = isReviewed ? 'Reviewed' : 'Pending Review';
+        reviewDisplay.style.color = isReviewed ? 'var(--stable-green)' : 'var(--urgent-yellow)';
 
-        // Bind the exact strings from the phenotype_narratives map
         const narratives = data.phenotype_narratives || {};
-        document.getElementById('ischemic-content').innerText = narratives.ischemia || "No data reported.";
-        document.getElementById('meds-content').innerText = narratives.medications || "No data reported.";
-        document.getElementById('hemostasis-content').innerText = narratives.hemostasis || "No data reported.";
-        document.getElementById('hemo-content').innerText = `RHYTHM:\n${narratives.hemodynamics || "No data."}\n\nWELLBEING:\n${narratives.wellbeing || "No data."}`;
+        document.getElementById('ischemic-content').innerText = narratives.ischemia || data.chest_summary || "No data reported.";
+        document.getElementById('meds-content').innerText = narratives.medications || data.meds_summary || "No data reported.";
+        document.getElementById('hemostasis-content').innerText = narratives.hemostasis || data.bleeding_summary || "No data reported.";
+        
+        const rhythmText = narratives.hemodynamics || data.rhythm_summary || "No data.";
+        const wellbeingText = narratives.wellbeing || data.wellbeing_summary || "No data.";
+        document.getElementById('hemo-content').innerText = `RHYTHM:\n${rhythmText}\n\nWELLBEING:\n${wellbeingText}`;
 
         const ischemicBox = document.getElementById('ischemic-content');
-        if(status === 'RED') ischemicBox.classList.add('red-flag');
+        if(status === 'RED' && !isReviewed) ischemicBox.classList.add('red-flag');
         else ischemicBox.classList.remove('red-flag');
+
+        document.getElementById('btn-contact').disabled = false;
+        const btnReview = document.getElementById('btn-review');
+        if (isReviewed) {
+            btnReview.disabled = true;
+            btnReview.innerHTML = `<i class="fa-solid fa-check"></i> Already Reviewed`;
+        } else {
+            btnReview.disabled = false;
+            btnReview.innerHTML = `<i class="fa-solid fa-check-double"></i> Mark as Reviewed`;
+        }
+    }
+
+    window.markAsReviewed = async function() {
+        if (!window.currentDocId) return;
+        
+        const btnReview = document.getElementById('btn-review');
+        btnReview.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Updating...`;
+        btnReview.disabled = true;
+
+        try {
+            const patientDocRef = doc(window.db, "patient_reports", window.currentDocId);
+            await updateDoc(patientDocRef, {
+                reviewed: true
+            });
+            console.log("Patient marked as reviewed successfully.");
+        } catch (error) {
+            console.error("Error updating document: ", error);
+            btnReview.innerHTML = `Error. Try Again.`;
+            btnReview.disabled = false;
+        }
     }
   </script>
 </body>
