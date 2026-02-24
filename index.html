@@ -38,8 +38,13 @@
       display: flex;
     }
 
+    /* --- MOBILE MENU OVERLAY & BUTTON --- */
+    .mobile-menu-btn { display: none; background: transparent; border: none; color: var(--clinical-cyan); font-size: 2rem; cursor: pointer; transition: 0.3s; padding-right: 15px; }
+    .mobile-menu-btn:hover { transform: scale(1.1); }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 999; opacity: 0; transition: opacity 0.3s; }
+
     /* SIDEBAR ARRANGEMENTS */
-    aside { width: 380px; background: rgba(2, 6, 23, 0.95); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; z-index: 10; box-shadow: 5px 0 25px rgba(0,0,0,0.2); }
+    aside { width: 380px; background: rgba(2, 6, 23, 0.95); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; z-index: 1000; box-shadow: 5px 0 25px rgba(0,0,0,0.2); }
     .aside-header { padding: 30px 30px 15px 30px; }
     .search-box { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 14px 15px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; outline: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: inherit; }
     .search-box:focus { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
@@ -106,16 +111,29 @@
     .btn-archive:hover:not(:disabled) { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
 
     /* =========================================================
-       🚀 RESPONSIVE UPGRADES (TABLET & MOBILE DOCTORS)
+       🚀 RESPONSIVE SLIDE-OUT DRAWER (TABLET & MOBILE)
        ========================================================= */
     @media (max-width: 1024px) {
+      .mobile-menu-btn { display: block; }
       body { flex-direction: column; overflow-y: auto; }
-      aside { width: 100%; height: 40vh; border-right: none; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
-      main { height: auto; overflow: visible; padding: 25px; }
+      
+      /* Turn aside into a sliding drawer */
+      aside { 
+        position: fixed; top: 0; left: -100%; height: 100vh; width: 340px; max-width: 85vw;
+        border-right: 1px solid var(--glass-border); z-index: 1000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      aside.open { left: 0; }
+      .sidebar-overlay.active { display: block; opacity: 1; }
+      
+      main { height: auto; overflow: visible; padding: 25px; padding-top: 25px; }
+      
+      /* Adjust header for mobile layout */
+      header { flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+      header > div:first-child { display: flex; align-items: flex-start; }
+      header h1 { font-size: 1.8rem !important; }
+      
       .pci-metrics { grid-template-columns: 1fr; gap: 15px; }
       .clinical-grid { grid-template-columns: 1fr; gap: 15px; }
-      header { flex-direction: column; align-items: flex-start; gap: 15px; }
-      header div[style*="text-align: right;"] { text-align: left !important; }
       .action-bar { flex-direction: column; }
       .btn { justify-content: center; }
     }
@@ -123,9 +141,14 @@
 </head>
 <body>
 
-  <aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <aside id="patient-sidebar">
     <div class="aside-header">
-      <h2 style="font-size: 1.2rem; font-weight: 800;"><i class="fa-solid fa-tower-broadcast" style="color: var(--clinical-cyan);"></i> CLINICAL TRIAGE</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 1.2rem; font-weight: 800;"><i class="fa-solid fa-tower-broadcast" style="color: var(--clinical-cyan);"></i> CLINICAL TRIAGE</h2>
+        <i class="fa-solid fa-xmark mobile-menu-btn" style="padding: 0; font-size: 1.5rem;" onclick="toggleSidebar()"></i>
+      </div>
       <input type="text" class="search-box" id="searchInput" placeholder="Search Patient ID...">
     </div>
     
@@ -141,9 +164,14 @@
 
   <main id="main-content">
     <header class="animate-in">
-      <div>
-        <span style="color: var(--clinical-cyan); font-weight: 700; font-size: 0.8rem; letter-spacing: 2px;">PATIENT CLINICAL PROFILE</span>
-        <h1 id="patient-name-display" style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Awaiting Selection</h1>
+      <div style="display: flex; align-items: center;">
+        <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="toggleSidebar()">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div>
+          <span style="color: var(--clinical-cyan); font-weight: 700; font-size: 0.8rem; letter-spacing: 2px;">PATIENT CLINICAL PROFILE</span>
+          <h1 id="patient-name-display" style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Awaiting Selection</h1>
+        </div>
       </div>
       <div style="text-align: right;">
         <div style="font-size: 0.8rem; opacity: 0.5;">LAST SYNC</div>
@@ -219,6 +247,12 @@
     window.currentFilter = 'all';
     window.searchQuery = ''; 
 
+    // --- SIDEBAR TOGGLE FUNCTION (MOBILE ONLY) ---
+    window.toggleSidebar = function() {
+        document.getElementById('patient-sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    };
+
     // REQUEST NOTIFICATION PERMISSIONS ON LOAD FOR STATION ALARM
     if (Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -233,37 +267,24 @@
     const q = query(reportsRef, orderBy("timestamp", "desc"));
 
     onSnapshot(q, (snapshot) => {
-        // 1. Update the local array
         window.allPatients = [];
         snapshot.forEach((doc) => {
             window.allPatients.push({ id: doc.id, data: doc.data() });
         });
 
-        // Explicit JavaScript Sorting (Highest millisecond/newest first)
         window.allPatients.sort((a, b) => {
-            let timeA = 0;
-            let timeB = 0;
-            
-            if (a.data.timestamp) {
-                timeA = typeof a.data.timestamp.toDate === 'function' ? a.data.timestamp.toDate().getTime() : new Date(a.data.timestamp).getTime();
-            }
-            if (b.data.timestamp) {
-                timeB = typeof b.data.timestamp.toDate === 'function' ? b.data.timestamp.toDate().getTime() : new Date(b.data.timestamp).getTime();
-            }
-            
+            let timeA = 0; let timeB = 0;
+            if (a.data.timestamp) timeA = typeof a.data.timestamp.toDate === 'function' ? a.data.timestamp.toDate().getTime() : new Date(a.data.timestamp).getTime();
+            if (b.data.timestamp) timeB = typeof b.data.timestamp.toDate === 'function' ? b.data.timestamp.toDate().getTime() : new Date(b.data.timestamp).getTime();
             return timeB - timeA; 
         });
 
         renderPatientList();
 
-        // 2. STATION ALARM LOGIC: Listen specifically for brand new documents
         snapshot.docChanges().forEach((change) => {
             if (change.type === "added") {
                 const newPatient = change.doc.data();
-                
-                // Trigger alarm if it is RED and has not been reviewed
                 if (newPatient.triage_status === 'RED' && !newPatient.reviewed) {
-                    
                     const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                     alarmSound.play().catch(e => console.log("Audio autoplay blocked until user clicks the page."));
                     
@@ -272,11 +293,7 @@
                             body: `Patient ${newPatient.patient_id || 'Unknown'} has triggered a RED alert. Immediate review required.`,
                             icon: "https://www.gstatic.com/images/icons/material/system/2x/warning_amber_red_24dp.png"
                         });
-                        
-                        notification.onclick = function() {
-                            window.focus();
-                            this.close();
-                        };
+                        notification.onclick = function() { window.focus(); this.close(); };
                     }
                 }
             }
@@ -346,19 +363,20 @@
             document.querySelectorAll('.patient-item').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             
-            // Re-trigger the fade-in animation to make it feel smooth
             const mainContentNodes = document.querySelectorAll('.animate-in');
             mainContentNodes.forEach(node => {
                 node.style.animation = 'none';
-                node.offsetHeight; // trigger reflow
+                node.offsetHeight; 
                 node.style.animation = null; 
             });
 
             window.loadPatientDetails(data, docId);
             
-            // If on mobile, scroll down slightly to the content after clicking a patient
+            // --- SMART MOBILE CLOSURE: Auto-close sidebar on patient select ---
             if(window.innerWidth <= 1024) {
-                 document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });
+                 document.getElementById('patient-sidebar').classList.remove('open');
+                 document.getElementById('sidebarOverlay').classList.remove('active');
+                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         };
         
@@ -383,7 +401,6 @@
         const status = data.triage_status || 'GREEN';
         const statusDisplay = document.getElementById('triage-status-display');
         
-        // DYNAMIC EMOJI FIX APPLIED HERE
         let emoji = '🟢';
         let statusColor = 'var(--stable-green)';
         
