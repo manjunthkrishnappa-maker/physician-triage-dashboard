@@ -23,6 +23,12 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* --- ELITE UX: CUSTOM SCROLLBARS --- */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; transition: 0.3s; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--clinical-cyan); }
+
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background: var(--deep-navy);
@@ -32,61 +38,87 @@
       display: flex;
     }
 
-    /* SIDEBAR */
-    aside { width: 350px; background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
+    /* SIDEBAR ARRANGEMENTS */
+    aside { width: 380px; background: rgba(2, 6, 23, 0.95); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; z-index: 10; box-shadow: 5px 0 25px rgba(0,0,0,0.2); }
     .aside-header { padding: 30px 30px 15px 30px; }
-    .search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; outline: none; transition: 0.3s; }
-    .search-box:focus { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); }
+    .search-box { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 14px 15px; border-radius: 12px; color: #fff; width: 100%; margin-top: 15px; outline: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: inherit; }
+    .search-box:focus { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
     
     /* FILTER TABS */
     .filter-tabs { display: flex; gap: 10px; padding: 0 30px 20px 30px; border-bottom: 1px solid var(--glass-border); }
-    .filter-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.3s; }
-    .filter-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
-    .filter-btn.active { background: rgba(0, 242, 254, 0.1); color: var(--clinical-cyan); border-color: rgba(0, 242, 254, 0.3); }
+    .filter-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s ease; }
+    .filter-btn:hover { background: rgba(255,255,255,0.05); color: #fff; transform: translateY(-1px); }
+    .filter-btn.active { background: rgba(0, 242, 254, 0.1); color: var(--clinical-cyan); border-color: rgba(0, 242, 254, 0.3); box-shadow: 0 4px 15px rgba(0, 242, 254, 0.05); }
 
-    .patient-list { flex: 1; overflow-y: auto; padding: 20px; }
-    .patient-item { padding: 15px; border-radius: 16px; background: var(--glass-white); margin-bottom: 10px; border: 1px solid var(--glass-border); cursor: pointer; transition: 0.3s; position: relative; }
-    .patient-item:hover { background: rgba(255,255,255,0.08); }
-    .patient-item.active { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); }
-    .patient-item.reviewed { opacity: 0.5; border-color: transparent; }
-    .patient-item .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-    .status-dot { width: 12px; height: 12px; border-radius: 50%; }
+    /* ELITE UX: SMOOTH CARD PHYSICS */
+    .patient-list { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
+    .patient-item { padding: 18px; border-radius: 16px; background: var(--glass-white); margin-bottom: 12px; border: 1px solid var(--glass-border); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+    .patient-item:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+    .patient-item.active { border-color: var(--clinical-cyan); background: rgba(0, 242, 254, 0.05); transform: translateX(8px); border-left: 4px solid var(--clinical-cyan); }
+    .patient-item.reviewed { opacity: 0.4; border-color: transparent; }
+    .patient-item.reviewed:hover { opacity: 0.8; }
+    .patient-item .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .status-dot { width: 12px; height: 12px; border-radius: 50%; transition: 0.3s; }
 
-    /* ELITE UI: SYMPTOM TAGS */
-    .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    /* SYMPTOM TAGS */
+    .tag-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .symptom-tag { font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px; }
     .tag-red { background: rgba(255, 77, 77, 0.15); color: var(--emergent-red); border: 1px solid rgba(255, 77, 77, 0.3); }
     .tag-yellow { background: rgba(255, 183, 3, 0.15); color: var(--urgent-yellow); border: 1px solid rgba(255, 183, 3, 0.3); }
 
-    /* MAIN VIEWPORT */
-    main { flex: 1; overflow-y: auto; padding: 40px; background: radial-gradient(circle at top right, rgba(0, 97, 255, 0.05) 0%, transparent 40%); }
+    /* MAIN VIEWPORT & ANIMATIONS */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    main { flex: 1; overflow-y: auto; padding: 40px; background: radial-gradient(circle at top right, rgba(0, 97, 255, 0.05) 0%, transparent 40%); scroll-behavior: smooth; }
+    .animate-in { animation: fadeSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
     
     .pci-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-    .metric-card { background: var(--glass-white); padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border); transition: 0.3s; }
+    .metric-card { background: var(--glass-white); padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border); transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .metric-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
     .metric-card span { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
     .metric-card h3 { font-size: 1.8rem; font-weight: 800; margin-top: 5px; }
 
     .clinical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
-    .data-card { background: var(--glass-white); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 30px; }
+    .data-card { background: var(--glass-white); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 30px; transition: 0.3s; }
+    .data-card:hover { border-color: rgba(0, 242, 254, 0.2); }
     .data-card h4 { font-size: 1rem; color: var(--clinical-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
-    .symptom-note { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; font-size: 0.95rem; color: rgba(255,255,255,0.8); line-height: 1.6; white-space: pre-wrap; border-left: 4px solid var(--medical-blue); }
+    .symptom-note { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; font-size: 0.95rem; color: rgba(255,255,255,0.8); line-height: 1.6; white-space: pre-wrap; border-left: 4px solid var(--medical-blue); transition: 0.3s; }
     .red-flag { border-left-color: var(--emergent-red); background: rgba(255, 77, 77, 0.05); }
 
     /* CLINICAL ACTION LOG AREA */
     .resolution-panel { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; margin-top: 20px; }
     .resolution-panel h4 { font-size: 0.9rem; color: var(--urgent-yellow); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
     .note-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: #fff; font-family: inherit; font-size: 0.95rem; resize: vertical; min-height: 80px; outline: none; margin-bottom: 20px; transition: 0.3s; }
-    .note-input:focus { border-color: var(--clinical-cyan); }
-    .note-input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .note-input:focus { border-color: var(--clinical-cyan); box-shadow: 0 0 10px rgba(0, 242, 254, 0.1); }
+    .note-input:disabled { opacity: 0.5; cursor: not-allowed; border-color: transparent; }
 
     .action-bar { display: flex; gap: 15px; }
-    .btn { padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn { padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 10px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
     .btn-call { background: var(--medical-blue); color: white; }
-    .btn-call:hover:not(:disabled) { box-shadow: 0 0 20px rgba(0, 97, 255, 0.4); }
+    .btn-call:hover:not(:disabled) { box-shadow: 0 5px 20px rgba(0, 97, 255, 0.4); transform: translateY(-2px); }
     .btn-archive { background: rgba(255,255,255,0.1); color: white; }
-    .btn-archive:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+    .btn-archive:hover:not(:disabled) { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+    /* =========================================================
+       🚀 RESPONSIVE UPGRADES (TABLET & MOBILE DOCTORS)
+       ========================================================= */
+    @media (max-width: 1024px) {
+      body { flex-direction: column; overflow-y: auto; }
+      aside { width: 100%; height: 40vh; border-right: none; border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
+      main { height: auto; overflow: visible; padding: 25px; }
+      .pci-metrics { grid-template-columns: 1fr; gap: 15px; }
+      .clinical-grid { grid-template-columns: 1fr; gap: 15px; }
+      header { flex-direction: column; align-items: flex-start; gap: 15px; }
+      header div[style*="text-align: right;"] { text-align: left !important; }
+      .action-bar { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
   </style>
 </head>
 <body>
@@ -107,8 +139,8 @@
     </div>
   </aside>
 
-  <main>
-    <header>
+  <main id="main-content">
+    <header class="animate-in">
       <div>
         <span style="color: var(--clinical-cyan); font-weight: 700; font-size: 0.8rem; letter-spacing: 2px;">PATIENT CLINICAL PROFILE</span>
         <h1 id="patient-name-display" style="font-size: 2.2rem; font-weight: 800; margin-top: 5px;">Awaiting Selection</h1>
@@ -119,7 +151,7 @@
       </div>
     </header>
 
-    <div class="pci-metrics">
+    <div class="pci-metrics animate-in" style="animation-delay: 0.1s;">
       <div class="metric-card" id="status-card">
         <span>Overall Triage Status</span>
         <h3 id="triage-status-display">--</h3>
@@ -134,7 +166,7 @@
       </div>
     </div>
 
-    <div class="clinical-grid">
+    <div class="clinical-grid animate-in" style="animation-delay: 0.2s;">
       <div class="data-card">
         <h4><i class="fa-solid fa-heart-pulse"></i> Ischemic Phenotype</h4>
         <div id="ischemic-content" class="symptom-note">Select a patient record to begin review.</div>
@@ -153,7 +185,7 @@
       </div>
     </div>
 
-    <div class="resolution-panel">
+    <div class="resolution-panel animate-in" style="animation-delay: 0.3s;">
       <h4><i class="fa-solid fa-user-doctor"></i> Clinical Action Log</h4>
       <textarea id="physician-note" class="note-input" placeholder="Document patient contact, medication adjustments, or triage resolution here before marking as reviewed..."></textarea>
       
@@ -313,7 +345,21 @@
         card.onclick = () => {
             document.querySelectorAll('.patient-item').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
+            
+            // Re-trigger the fade-in animation to make it feel smooth
+            const mainContentNodes = document.querySelectorAll('.animate-in');
+            mainContentNodes.forEach(node => {
+                node.style.animation = 'none';
+                node.offsetHeight; // trigger reflow
+                node.style.animation = null; 
+            });
+
             window.loadPatientDetails(data, docId);
+            
+            // If on mobile, scroll down slightly to the content after clicking a patient
+            if(window.innerWidth <= 1024) {
+                 document.getElementById('main-content').scrollIntoView({ behavior: 'smooth' });
+            }
         };
         
         card.innerHTML = `
